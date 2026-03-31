@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Application", "Core\Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Presentation.Wpf", "Presentation\Presentation.Wpf\Presentation.Wpf.csproj", "{05D9DEB8-2363-4D55-8B96-9BF2EAC8533D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core.Infrastructure", "Core\Core.Infrastructure\Core.Infrastructure.csproj", "{AD20BD9C-C5CA-4297-9E50-9D2FE325303A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,10 +30,15 @@ Global
 		{05D9DEB8-2363-4D55-8B96-9BF2EAC8533D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05D9DEB8-2363-4D55-8B96-9BF2EAC8533D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05D9DEB8-2363-4D55-8B96-9BF2EAC8533D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD20BD9C-C5CA-4297-9E50-9D2FE325303A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD20BD9C-C5CA-4297-9E50-9D2FE325303A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD20BD9C-C5CA-4297-9E50-9D2FE325303A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD20BD9C-C5CA-4297-9E50-9D2FE325303A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{137FCC6E-244E-4DAD-A267-30CD2627FB13} = {C2C4A335-A421-4B04-B9AC-43DF96BFE54D}
 		{9F8730DD-A81F-4232-BA03-9EFEBCD57FA2} = {C2C4A335-A421-4B04-B9AC-43DF96BFE54D}
 		{05D9DEB8-2363-4D55-8B96-9BF2EAC8533D} = {FD26B9BB-93BD-4EB4-839C-6452346EAEAF}
+		{AD20BD9C-C5CA-4297-9E50-9D2FE325303A} = {C2C4A335-A421-4B04-B9AC-43DF96BFE54D}
 	EndGlobalSection
 EndGlobal

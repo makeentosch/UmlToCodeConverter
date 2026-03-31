@@ -1,4 +1,6 @@
-﻿namespace Core.Domain.Models;
+﻿using Core.Domain.Enums;
+
+namespace Core.Domain.Models;
 
 public class UmlRelationship
 {

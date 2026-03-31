@@ -2,7 +2,14 @@
 
 public class UmlClass : UmlElement
 {
-    public List<UmlProperty> Properties { get; set; } = new();
-    public List<UmlMethod> Methods { get; set; } = new();
-    public List<string> Interfaces { get; set; } = new();
+    public string Name { get; set; }
+    public List<UmlProperty>? Properties { get; set; }
+    public List<UmlMethod>? Methods { get; set; }
+
+    public UmlClass(string name, List<UmlProperty>? properties = null, List<UmlMethod>? methods = null)
+    {
+        Name = name;
+        Properties = properties;
+        Methods = methods;
+    }
 }

@@ -1,10 +1,10 @@
-﻿namespace Core.Domain.Models;
+﻿using Core.Domain.Enums;
+
+namespace Core.Domain.Models;
 
 public class UmlProperty
 {
-    public Visibility Visibility { get; set; } = Visibility.Public;
-    public string Name { get; set; } = string.Empty;
-    public string Type { get; set; } = "object";
-    public bool IsStatic { get; set; }
-    public bool IsReadOnly { get; set; }
+    public string Name { get; set; }
+    public string Type { get; set; }
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Private;
 }
