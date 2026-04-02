@@ -7,7 +7,7 @@ public class CodeGenerator : ICodeGenerator
 {
     public string LanguageName { get; }
 
-    public string Generate(UmlDiagram diagram)
+    public string Generate(CodeObjectModel objectModel)
     {
         throw new NotImplementedException();
     }

@@ -1,6 +1,9 @@
 ﻿namespace Core.Domain.Models;
 
-public class UmlDiagram
+/// <summary>
+/// Объектная модель, на основе которой будет происходить генерация кода на ЯП.
+/// </summary>
+public class CodeObjectModel
 {
     public List<UmlClass> Classes { get; set; } = new();
     public List<UmlInterface> Interfaces { get; set; } = new();

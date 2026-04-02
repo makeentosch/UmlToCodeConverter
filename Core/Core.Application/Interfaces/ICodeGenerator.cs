@@ -5,5 +5,5 @@ namespace Core.Application.Interfaces;
 public interface ICodeGenerator
 {
     public string LanguageName { get; }
-    string Generate(UmlDiagram diagram);
+    string Generate(CodeObjectModel objectModel);
 }

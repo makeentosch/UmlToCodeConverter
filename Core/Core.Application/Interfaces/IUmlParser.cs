@@ -4,7 +4,7 @@ namespace Core.Application.Interfaces;
 
 public interface IUmlParser
 {
-    UmlDiagram Parse(string plantUmlContent);
+    CodeObjectModel Parse(string plantUmlContent);
 
-    void ValidateUml(string plantUmlText);
+    void ValidateUml(string plantUmlContent);
 }
