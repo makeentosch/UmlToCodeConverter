@@ -2,10 +2,10 @@
 
 public enum RelationshipType
 {
-    Inheritance,      // <|-- 
-    Realization,      // ..|>
-    Association,      // -->
-    Aggregation,      // o--
-    Composition,      // *--
-    Dependency        // ..>
+    Inheritance,
+    Realization,
+    Association,
+    Aggregation,
+    Composition,
+    Dependency
 }

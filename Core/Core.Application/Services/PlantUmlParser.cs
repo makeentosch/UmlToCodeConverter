@@ -17,43 +17,75 @@ public class PlantUmlParser : IUmlParser
 
         ValidateUml(plantUmlContent);
 
-        var umlStrings = plantUmlContent.Split(['\r', '\n'],
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var lines = plantUmlContent
+            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .Where(l => !string.IsNullOrEmpty(l))
+            .ToList();
 
         UmlElement? currentElement = null;
 
-        foreach (var umlString in umlStrings)
+        foreach (var line in lines)
         {
-            if (IsStartOrEndTag(umlString))
+            if (line.StartsWith(PlantUmlKeywords.StartUml) || line.StartsWith(PlantUmlKeywords.EndUml))
                 continue;
 
-            if (umlString == PlantUmlKeywords.CloseBrace)
+            if (line is PlantUmlKeywords.CloseBrace)
             {
                 currentElement = null;
                 continue;
             }
 
-            if (currentElement is null && TryParseRelationship(umlString, out var relationship))
+            if (currentElement is null && TryParseRelationship(line, out var relationship))
             {
                 result.Relationships.Add(relationship!);
                 continue;
             }
 
-            if (TryParseElementDeclaration(umlString, out var newElement))
+            if (currentElement is null && TryParseElementDeclaration(line, out var newElement))
             {
-                currentElement = newElement;
-                AddElementToDiagram(result, currentElement!);
+                switch (newElement)
+                {
+                    case UmlClass c:
+                        result.Classes.Add(c);
+                        break;
+                    case UmlInterface i:
+                        result.Interfaces.Add(i);
+                        break;
+                    case UmlEnum e:
+                        result.Enums.Add(e);
+                        break;
+                }
+
+                if (line.Contains(PlantUmlKeywords.OpenBrace))
+                    currentElement = newElement;
+
                 continue;
             }
 
-            if (currentElement is not null && umlString.Length > 0)
-                ParseMember(umlString, currentElement);
+            if (currentElement is null)
+                continue;
+
+            if (currentElement is UmlClass currentClass)
+            {
+                if (TryParseMethod(line, out var method))
+                    currentClass.Methods!.Add(method!);
+                else if (TryParseProperty(line, out var property))
+                    currentClass.Properties!.Add(property!);
+            }
+            else if (currentElement is UmlInterface currentInterface)
+            {
+                if (TryParseMethod(line, out var method))
+                    currentInterface.Methods.Add(method!);
+            }
+            else if (currentElement is UmlEnum currentEnum)
+                currentEnum.Values.Add(line);
         }
 
         return result;
     }
 
-    public void ValidateUml(string plantUmlContent)
+    private static void ValidateUml(string plantUmlContent)
     {
         if (string.IsNullOrWhiteSpace(plantUmlContent))
             throw new InvalidUmlException("UML is empty.");
@@ -75,177 +107,136 @@ public class PlantUmlParser : IUmlParser
                 $"Mismatched brackets. Found {openBracesCount} open and {closeBracesCount} close.");
     }
 
-    private static bool TryParseRelationship(string line, out UmlRelationship? relationship)
-    {
-        relationship = null;
-
-        var relationships = new Dictionary<string, RelationshipType>
-        {
-            { PlantUmlKeywords.Relationships.Inheritance, RelationshipType.Inheritance },
-            { PlantUmlKeywords.Relationships.Realization, RelationshipType.Realization },
-            { PlantUmlKeywords.Relationships.Association, RelationshipType.Association },
-            { PlantUmlKeywords.Relationships.Aggregation, RelationshipType.Aggregation },
-            { PlantUmlKeywords.Relationships.Composition, RelationshipType.Composition },
-            { PlantUmlKeywords.Relationships.Dependency, RelationshipType.Dependency }
-        };
-
-        foreach (var (symbol, type) in relationships)
-        {
-            if (!line.Contains(symbol))
-                continue;
-
-            var parts = line.Split(symbol);
-
-            if (parts.Length != 2)
-                continue;
-
-            relationship = new UmlRelationship
-            {
-                FromClassName = parts[0].Trim(),
-                ToClassName = parts[1].Trim(),
-                Type = type
-            };
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool TryParseElementDeclaration(string umlString, out UmlElement? element)
+    private static bool TryParseElementDeclaration(string line, out UmlElement? element)
     {
         element = null;
-        var parts = umlString.Split(PlantUmlKeywords.Space, StringSplitOptions.RemoveEmptyEntries);
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length < 2)
             return false;
 
-        var name = parts[1].Replace(PlantUmlKeywords.OpenBrace, string.Empty).Trim();
+        var keyword = parts.First().ToLower();
+        var name = parts[1].Trim('{');
 
-        if (umlString.StartsWith(PlantUmlKeywords.Declarations.Class))
+        switch (keyword)
         {
-            element = new UmlClass
-            {
-                Name = name,
-                Properties = new List<UmlProperty>(),
-                Methods = new List<UmlMethod>()
-            };
-            return true;
+            case PlantUmlKeywords.Declarations.Class:
+                element = new UmlClass
+                    { Name = name, Properties = new List<UmlProperty>(), Methods = new List<UmlMethod>() };
+                return true;
+            case PlantUmlKeywords.Declarations.Interface:
+                element = new UmlInterface { Name = name, Methods = new List<UmlMethod>() };
+                return true;
+            case PlantUmlKeywords.Declarations.Enum:
+                element = new UmlEnum { Name = name, Values = new List<string>() };
+                return true;
+            default:
+                return false;
         }
+    }
 
-        if (umlString.StartsWith(PlantUmlKeywords.Declarations.Interface))
-        {
-            element = new UmlInterface
-            {
-                Name = name,
-                Methods = new List<UmlMethod>()
-            };
-            return true;
-        }
+    private static bool TryParseRelationship(string line, out UmlRelationship? relationship)
+    {
+        relationship = null;
 
-        if (umlString.StartsWith(PlantUmlKeywords.Declarations.Enum))
+        var operators = new Dictionary<string, RelationshipType>
         {
-            element = new UmlEnum
+            { "--|>", RelationshipType.Inheritance },
+            { "..|>", RelationshipType.Realization },
+            { "-->", RelationshipType.Association },
+            { "o--", RelationshipType.Aggregation },
+            { "*--", RelationshipType.Composition },
+            { "..>", RelationshipType.Dependency }
+        };
+
+        foreach (var operation in operators)
+        {
+            if (!line.Contains(operation.Key))
+                continue;
+
+            var parts = line.Split(new[] { operation.Key }, StringSplitOptions.None);
+            if (parts.Length == 2)
             {
-                Name = name,
-                Values = new List<string>()
-            };
-            return true;
+                relationship = new UmlRelationship
+                {
+                    FromClassName = parts[0].Trim(),
+                    ToClassName = parts[1].Trim(),
+                    Type = operation.Value
+                };
+                return true;
+            }
         }
 
         return false;
     }
 
-    private static void AddElementToDiagram(CodeObjectModel objectModel, UmlElement element)
+    private static bool TryParseProperty(string line, out UmlProperty? property)
     {
-        switch (element)
+        property = null;
+        if (line.Contains('(')) return false;
+
+        var parts = line.Split(':');
+        if (parts.Length < 2) return false;
+
+        property = new UmlProperty
         {
-            case UmlClass classElement:
-                objectModel.Classes.Add(classElement);
-                break;
-            case UmlInterface interfaceElement:
-                objectModel.Interfaces.Add(interfaceElement);
-                break;
-            case UmlEnum enumElement:
-                objectModel.Enums.Add(enumElement);
-                break;
-        }
-    }
-
-    private static void ParseMember(string umlString, UmlElement targetElement)
-    {
-        if (umlString == PlantUmlKeywords.OpenBrace) return;
-
-        switch (targetElement)
-        {
-            case UmlEnum enumElement:
-                ParseEnumValue(umlString, enumElement);
-                break;
-            case UmlClass classElement:
-                ParseMember(umlString, classElement.Properties, classElement.Methods);
-                break;
-            case UmlInterface interfaceElement:
-                ParseMember(umlString, null, interfaceElement.Methods);
-                break;
-        }
-    }
-
-    private static void ParseEnumValue(string umlString, UmlEnum targetEnum)
-    {
-        var value = umlString.Trim();
-
-        if (!string.IsNullOrEmpty(value))
-            targetEnum.Values.Add(value);
-    }
-
-    private static void ParseMember(string umlString, List<UmlProperty>? properties, List<UmlMethod>? methods)
-    {
-        var visibility = umlString switch
-        {
-            _ when umlString.StartsWith(PlantUmlKeywords.AccessModifiers.Private) => AccessModifier.Private,
-            _ when umlString.StartsWith(PlantUmlKeywords.AccessModifiers.Protected) => AccessModifier.Protected,
-            _ when umlString.StartsWith(PlantUmlKeywords.AccessModifiers.Public) => AccessModifier.Public,
-            _ => AccessModifier.Public
+            AccessModifier = ParseAccessModifier(line.First().ToString()),
+            Name = parts.First().TrimStart('+', '-', '#', ' ').Trim(),
+            Type = parts[1].Trim()
         };
 
-        var cleanLine = umlString.TrimStart(
-            PlantUmlKeywords.AccessModifiers.Private[0],
-            PlantUmlKeywords.AccessModifiers.Public[0],
-            PlantUmlKeywords.AccessModifiers.Protected[0],
-            PlantUmlKeywords.Space,
-            PlantUmlKeywords.OpenBrace[0]);
-
-        if (cleanLine.Contains(PlantUmlKeywords.MethodIndicator))
-        {
-            if (methods == null) return;
-
-            var method = new UmlMethod
-            {
-                AccessModifier = visibility,
-                Parameters = new List<UmlParameter>()
-            };
-
-            var parts = cleanLine.Split(PlantUmlKeywords.TypeSeparator);
-
-            method.Name = parts[0].Replace(PlantUmlKeywords.MethodIndicator, string.Empty).Trim();
-            method.ReturnType = parts.Length > 1 ? parts[1].Trim() : PlantUmlKeywords.DefaultReturnType;
-
-            methods.Add(method);
-        }
-        else
-        {
-            if (properties is null)
-                return;
-
-            var property = new UmlProperty { AccessModifier = visibility };
-            var parts = cleanLine.Split(PlantUmlKeywords.TypeSeparator);
-
-            property.Name = parts[0].Trim();
-            property.Type = parts.Length > 1 ? parts[1].Trim() : PlantUmlKeywords.DefaultPropertyType;
-
-            properties.Add(property);
-        }
+        return true;
     }
 
-    private static bool IsStartOrEndTag(string line) =>
-        line.StartsWith(PlantUmlKeywords.StartUml) || line.StartsWith(PlantUmlKeywords.EndUml);
+    private static bool TryParseMethod(string line, out UmlMethod? method)
+    {
+        method = null;
+
+        var openParenIndex = line.IndexOf('(');
+        var closeParenIndex = line.IndexOf(')');
+
+        if (openParenIndex == -1 || closeParenIndex == -1)
+            return false;
+
+        method = new UmlMethod
+        {
+            Parameters = new List<UmlParameter>(),
+            AccessModifier = ParseAccessModifier(line)
+        };
+
+        var nameStartIndex = line.StartsWith("+") || line.StartsWith("-") || line.StartsWith("#") ? 1 : 0;
+        method.Name = line.Substring(nameStartIndex, openParenIndex - nameStartIndex).Trim();
+
+        var colonIndex = line.LastIndexOf(':');
+        method.ReturnType = colonIndex > closeParenIndex
+            ? line.Substring(colonIndex + 1).Trim()
+            : PlantUmlKeywords.DefaultReturnType;
+
+        var paramsString = line.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1);
+
+        if (string.IsNullOrWhiteSpace(paramsString))
+            return true;
+
+        var paramTokens = paramsString.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var token in paramTokens)
+        {
+            var parts = token.Split(':');
+            method.Parameters.Add(new UmlParameter
+            {
+                Name = parts[0].Trim(),
+                Type = parts.Length > 1 ? parts[1].Trim() : PlantUmlKeywords.DefaultPropertyType
+            });
+        }
+
+        return true;
+    }
+
+    private static AccessModifier ParseAccessModifier(string umlAccessModifier) =>
+        umlAccessModifier switch
+        {
+            PlantUmlKeywords.AccessModifiers.Private => AccessModifier.Private,
+            PlantUmlKeywords.AccessModifiers.Protected => AccessModifier.Protected,
+            PlantUmlKeywords.AccessModifiers.Public => AccessModifier.Public,
+            _ => AccessModifier.Public
+        };
 }
