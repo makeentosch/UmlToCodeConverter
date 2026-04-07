@@ -1,9 +1,14 @@
 ﻿<Application x:Class="Presentation.Wpf.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Presentation.Wpf"
+             xmlns:converters="clr-namespace:Presentation.Wpf.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/DarkTheme.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <converters:StatusColorConverter x:Key="StatusColorConverter" />
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

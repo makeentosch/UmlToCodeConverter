@@ -3,10 +3,76 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Presentation.Wpf"
+        xmlns:viewModels="clr-namespace:Presentation.Wpf.ViewModels"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="UML to Code Generator" Height="650" Width="1100"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBaseBrush}"
+        Foreground="{StaticResource ForegroundBaseBrush}">
+    
+    <Window.DataContext>
+        <viewModels:MainViewModel />
+    </Window.DataContext>
 
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#252526" CornerRadius="2" Padding="10" Margin="0,0,0,15" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Input:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#808080"/>
+                    <ComboBox ItemsSource="{Binding InputFormats}" 
+                              SelectedItem="{Binding SelectedInputFormat}" 
+                              Width="130"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <TextBlock Text="Generate to:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#808080"/>
+                    <ComboBox ItemsSource="{Binding OutputLanguages}" 
+                              SelectedItem="{Binding SelectedOutputLanguage}" 
+                              Width="100" Margin="0,0,15,0"/>
+                    
+                    <Button Content="Generate Code" 
+                            Command="{Binding GenerateCommand}" 
+                            Style="{StaticResource AccentButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/> <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Grid.Column="0" Header="UML / XML SOURCE">
+                <TextBox Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}" 
+                         AcceptsReturn="True" 
+                         VerticalScrollBarVisibility="Auto" 
+                         FontFamily="Consolas" FontSize="13"
+                         Margin="0,5,0,0" BorderThickness="0,1,0,0"/> </GroupBox>
+
+            <GridSplitter Grid.Column="1"/>
+
+            <GroupBox Grid.Column="2" Header="GENERATED CODE">
+                <TextBox Text="{Binding OutputText}" 
+                         IsReadOnly="True"
+                         AcceptsReturn="True" 
+                         VerticalScrollBarVisibility="Auto" 
+                         FontFamily="Consolas" FontSize="13"
+                         Margin="0,5,0,0" BorderThickness="0,1,0,0"/>
+            </GroupBox>
+        </Grid>
+
+        <StatusBar Grid.Row="2" Margin="0,10,0,-5" Background="Transparent" BorderThickness="0">
+            <TextBlock Text="{Binding StatusMessage}" 
+                       FontWeight="Bold" 
+                       FontSize="12"
+                       Foreground="{Binding StatusMessage, Converter={StaticResource StatusColorConverter}, FallbackValue={StaticResource ForegroundBaseBrush}}"/>
+        </StatusBar>
     </Grid>
 </Window>
