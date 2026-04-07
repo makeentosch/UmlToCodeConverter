@@ -1,9 +1,9 @@
-﻿namespace Core.Infrastructure.CodeGenerators;
-
-using System.Text;
+﻿using System.Text;
 using Core.Application.Interfaces;
 using Core.Domain.Enums;
 using Core.Domain.Models;
+
+namespace Core.Infrastructure.CodeGenerators;
 
 public class JavaCodeGenerator : ICodeGenerator
 {
@@ -27,7 +27,7 @@ public class JavaCodeGenerator : ICodeGenerator
 
         foreach (var umlClass in objectModel.Classes)
         {
-            GenerateClass(umlClass, sb);
+            GenerateClass(umlClass, sb, objectModel);
             sb.AppendLine();
         }
 
@@ -38,10 +38,8 @@ public class JavaCodeGenerator : ICodeGenerator
     {
         sb.AppendLine($"public enum {umlEnum.Name} {{");
 
-        if (umlEnum.Values.Count > 0)
-        {
+        if (umlEnum.Values.Count != 0)
             sb.AppendLine($"    {string.Join(", ", umlEnum.Values)}");
-        }
 
         sb.AppendLine("}");
     }
@@ -53,44 +51,85 @@ public class JavaCodeGenerator : ICodeGenerator
         foreach (var method in umlInterface.Methods)
         {
             var parameters = GenerateParameters(method.Parameters);
-            var returnType = MapToJavaType(method.ReturnType);
-            sb.AppendLine($"    {returnType} {method.Name}({parameters});");
+            sb.AppendLine($"    {MapToJavaType(method.ReturnType)} {method.Name}({parameters});");
         }
 
         sb.AppendLine("}");
     }
 
-    private static void GenerateClass(UmlClass umlClass, StringBuilder sb)
+    private static void GenerateClass(UmlClass umlClass, StringBuilder sb, CodeObjectModel model)
     {
-        sb.AppendLine($"public class {umlClass.Name} {{");
+        var inheritances = model.Relationships
+            .Where(r => r.FromClassName == umlClass.Name && r.Type == RelationshipType.Inheritance)
+            .Select(r => r.ToClassName)
+            .ToList();
 
-        foreach (var property in umlClass.Properties)
-        {
-            var accessModifier = GetAccessModifierString(property.AccessModifier);
-            var javaType = MapToJavaType(property.Type);
-            sb.AppendLine($"    {accessModifier} {javaType} {property.Name};");
-        }
+        var realizations = model.Relationships
+            .Where(r => r.FromClassName == umlClass.Name && r.Type == RelationshipType.Realization)
+            .Select(r => r.ToClassName)
+            .ToList();
 
-        if (umlClass.Properties.Count > 0 && umlClass.Methods.Count > 0)
+        var classSignature = new StringBuilder($"public class {umlClass.Name}");
+
+        if (inheritances.Count != 0)
+            classSignature.Append($" extends {inheritances.First()}");
+        
+        if (realizations.Count != 0)
+            classSignature.Append($" implements {string.Join(", ", realizations)}");
+
+        sb.AppendLine(classSignature + " {");
+
+        var relationalProperties = model.Relationships
+            .Where(r => r.FromClassName == umlClass.Name &&
+                        (r.Type == RelationshipType.Composition ||
+                         r.Type == RelationshipType.Aggregation ||
+                         r.Type == RelationshipType.Association))
+            .ToList();
+
+        var hasProperties = (umlClass.Properties is not null
+                             && umlClass.Properties.Count != 0)
+                            || relationalProperties.Count != 0;
+
+        if (hasProperties)
         {
+            if (umlClass.Properties != null)
+            {
+                foreach (var prop in umlClass.Properties)
+                {
+                    var accessModifier = GetAccessModifierString(prop.AccessModifier);
+                    var javaType = MapToJavaType(prop.Type);
+                    sb.AppendLine($"    {accessModifier} {javaType} {prop.Name};");
+                }
+            }
+
+            foreach (var relProp in relationalProperties)
+            {
+                var javaType = MapToJavaType(relProp.ToClassName);
+                var propName = char.ToLower(relProp.ToClassName[0]) + relProp.ToClassName.Substring(1);
+                sb.AppendLine($"    public {javaType} {propName};");
+            }
+
             sb.AppendLine();
         }
 
-        foreach (var method in umlClass.Methods)
+        if (umlClass.Methods != null)
         {
-            var accessModifier = GetAccessModifierString(method.AccessModifier);
-            var returnType = MapToJavaType(method.ReturnType);
-            var parameters = GenerateParameters(method.Parameters);
+            foreach (var method in umlClass.Methods)
+            {
+                var accessModifier = GetAccessModifierString(method.AccessModifier);
+                var returnType = MapToJavaType(method.ReturnType);
+                var parameters = GenerateParameters(method.Parameters);
 
-            sb.AppendLine($"    {accessModifier} {returnType} {method.Name}({parameters}) {{");
-            sb.AppendLine("        throw new UnsupportedOperationException();");
-            sb.AppendLine("    }");
+                sb.AppendLine($"    {accessModifier} {returnType} {method.Name}({parameters}) {{");
+                sb.AppendLine("        throw new UnsupportedOperationException();");
+                sb.AppendLine("    }");
+            }
         }
 
         sb.AppendLine("}");
     }
 
-    private static string GenerateParameters(List<UmlParameter> parameters)
+    private static string GenerateParameters(List<UmlParameter>? parameters)
     {
         if (parameters == null || parameters.Count == 0)
             return string.Empty;
@@ -112,14 +151,14 @@ public class JavaCodeGenerator : ICodeGenerator
 
     private static string MapToJavaType(string type)
     {
-        return type.ToLower() switch
+        var lowerType = type.ToLower();
+        return lowerType switch
         {
             "string" => "String",
             "bool" => "boolean",
-            "int" => "int",
-            "double" => "double",
-            "float" => "float",
-            "void" => "void",
+            "object" => "Object",
+            "datetime" => "java.util.Date",
+            "guid" => "java.util.UUID",
             _ => type
         };
     }
