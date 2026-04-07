@@ -141,12 +141,12 @@ public class PlantUmlParser : IUmlParser
 
         var operators = new Dictionary<string, RelationshipType>
         {
-            { "--|>", RelationshipType.Inheritance },
-            { "..|>", RelationshipType.Realization },
-            { "-->", RelationshipType.Association },
-            { "o--", RelationshipType.Aggregation },
-            { "*--", RelationshipType.Composition },
-            { "..>", RelationshipType.Dependency }
+            { PlantUmlKeywords.Relationships.Inheritance, RelationshipType.Inheritance },
+            { PlantUmlKeywords.Relationships.Realization, RelationshipType.Realization },
+            { PlantUmlKeywords.Relationships.Association, RelationshipType.Association },
+            { PlantUmlKeywords.Relationships.Aggregation, RelationshipType.Aggregation },
+            { PlantUmlKeywords.Relationships.Composition, RelationshipType.Composition },
+            { PlantUmlKeywords.Relationships.Dependency, RelationshipType.Dependency }
         };
 
         foreach (var operation in operators)
