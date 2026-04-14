@@ -1,78 +1,173 @@
 ﻿<Window x:Class="Presentation.Wpf.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:viewModels="clr-namespace:Presentation.Wpf.ViewModels"
-        mc:Ignorable="d"
         Title="UML to Code Generator" Height="650" Width="1100"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBaseBrush}"
-        Foreground="{StaticResource ForegroundBaseBrush}">
-    
+        Background="#1E1E1E"
+        Foreground="#D4D4D4">
+
     <Window.DataContext>
         <viewModels:MainViewModel />
     </Window.DataContext>
 
+    <Window.Resources>
+        <SolidColorBrush x:Key="BackgroundBaseBrush" Color="#1E1E1E" />
+        <SolidColorBrush x:Key="ForegroundBaseBrush" Color="#D4D4D4" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#3E3E42" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#1C97EA" />
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBaseBrush}" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource BackgroundBaseBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBaseBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="5" />
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{StaticResource BackgroundBaseBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBaseBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="5,2" />
+        </Style>
+
+        <Style x:Key="AccentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Padding" Value="15,5" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="2"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.85" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="GroupBox">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBaseBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" Foreground="{StaticResource AccentBrush}" FontWeight="Bold"
+                                   Margin="0,0,0,5" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="GridSplitter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="5" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="15">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <RowDefinition Height="*"/>    <RowDefinition Height="Auto"/> </Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <RowDefinition Height="*" /> <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#252526" CornerRadius="2" Padding="10" Margin="0,0,0,15" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+        <Border Grid.Row="0" Background="#252526" CornerRadius="2" Padding="10" Margin="0,0,0,15"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/> <ColumnDefinition Width="*"/>    <ColumnDefinition Width="Auto"/> </Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" /> <ColumnDefinition Width="*" /> <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <TextBlock Text="Input:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#808080"/>
-                    <ComboBox ItemsSource="{Binding InputFormats}" 
-                              SelectedItem="{Binding SelectedInputFormat}" 
-                              Width="130"/>
+                    <TextBlock Text="Input:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="WhiteSmoke"
+                               FontWeight="Bold" />
+                    <ComboBox ItemsSource="{Binding InputFormats}"
+                              SelectedItem="{Binding SelectedInputFormat}"
+                              Foreground="Black"
+                              Width="130" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <TextBlock Text="Generate to:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="#808080"/>
-                    <ComboBox ItemsSource="{Binding OutputLanguages}" 
-                              SelectedItem="{Binding SelectedOutputLanguage}" 
-                              Width="100" Margin="0,0,15,0"/>
-                    
-                    <Button Content="Generate Code" 
-                            Command="{Binding GenerateCommand}" 
-                            Style="{StaticResource AccentButtonStyle}"/>
+                    <TextBlock Text="Generate to:" VerticalAlignment="Center" Margin="0,0,10,0" Foreground="WhiteSmoke"
+                               FontWeight="Bold" />
+                    <ComboBox ItemsSource="{Binding OutputLanguages}"
+                              SelectedItem="{Binding SelectedOutputLanguage}"
+                              Foreground="Black"
+                              Width="100" Margin="0,0,15,0" />
+
+                    <Button Content="Generate Code"
+                            Command="{Binding GenerateCommand}"
+                            Style="{StaticResource AccentButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="5"/> <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="5" /> <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <GroupBox Grid.Column="0" Header="UML / XML SOURCE">
-                <TextBox Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}" 
-                         AcceptsReturn="True" 
-                         VerticalScrollBarVisibility="Auto" 
+                <TextBox Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         VerticalScrollBarVisibility="Auto"
                          FontFamily="Consolas" FontSize="13"
-                         Margin="0,5,0,0" BorderThickness="0,1,0,0"/> </GroupBox>
+                         Margin="0,5,0,0" BorderThickness="0,1,0,0" />
+            </GroupBox>
 
-            <GridSplitter Grid.Column="1"/>
+            <GridSplitter Grid.Column="1" />
 
             <GroupBox Grid.Column="2" Header="GENERATED CODE">
-                <TextBox Text="{Binding OutputText}" 
-                         IsReadOnly="True"
-                         AcceptsReturn="True" 
-                         VerticalScrollBarVisibility="Auto" 
-                         FontFamily="Consolas" FontSize="13"
-                         Margin="0,5,0,0" BorderThickness="0,1,0,0"/>
+                <RichTextBox x:Name="CodeOutputDisplay"
+                             IsReadOnly="True"
+                             FontFamily="Consolas" FontSize="13"
+                             Background="{StaticResource BackgroundBaseBrush}"
+                             BorderThickness="0,1,0,0"
+                             Margin="0,5,0,0">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0" />
+                        </Style>
+                    </RichTextBox.Resources>
+                </RichTextBox>
             </GroupBox>
         </Grid>
 
         <StatusBar Grid.Row="2" Margin="0,10,0,-5" Background="Transparent" BorderThickness="0">
-            <TextBlock Text="{Binding StatusMessage}" 
-                       FontWeight="Bold" 
-                       FontSize="12"
-                       Foreground="{Binding StatusMessage, Converter={StaticResource StatusColorConverter}, FallbackValue={StaticResource ForegroundBaseBrush}}"/>
+            <TextBlock Text="{Binding StatusMessage}" FontWeight="Bold" FontSize="12">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding StatusMessage}" Value="Code generated successfully.">
+                                <Setter Property="Foreground" Value="#4CAF50" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </StatusBar>
     </Grid>
 </Window>

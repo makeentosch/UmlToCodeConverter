@@ -1,7 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
-using Core.Application.Interfaces;
-using Core.Application.Services;
 using Core.Infrastructure.CodeGenerators;
 using Presentation.Wpf.MVVM;
 
@@ -9,37 +7,33 @@ namespace Presentation.Wpf.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private readonly IUmlParser _plantUmlParser;
-    private readonly IUmlParser _xmlUmlParser;
-
-    private readonly Dictionary<string, ICodeGenerator> _availableGenerators;
+    private readonly CodeGenerationService _generationService;
 
     private string _inputText = string.Empty;
     private string _outputText = string.Empty;
     private string _statusMessage = "Ready";
     private string _selectedInputFormat = "PlantUML";
     private string _selectedOutputLanguage = "C#";
+    private bool _hasError;
 
     public MainViewModel()
     {
-        _plantUmlParser = new PlantUmlParser();
-        _xmlUmlParser = new XmlUmlParser();
-
-        _availableGenerators = new List<ICodeGenerator>
-        {
-            new CSharpCodeGenerator(),
-            new JavaCodeGenerator(),
-            new GoCodeGenerator()
-        }.ToDictionary(g => g.LanguageName);
+        _generationService = new CodeGenerationService();
 
         InputFormats = new ObservableCollection<string> { "PlantUML", "XML" };
-        OutputLanguages = new ObservableCollection<string>(_availableGenerators.Keys);
+        OutputLanguages = new ObservableCollection<string> { "C#", "Java", "Go" };
 
         GenerateCommand = new RelayCommand(ExecuteGenerate);
     }
 
     public ObservableCollection<string> InputFormats { get; }
     public ObservableCollection<string> OutputLanguages { get; }
+
+    public bool HasError
+    {
+        get => _hasError;
+        set => SetProperty(ref _hasError, value);
+    }
 
     public string SelectedInputFormat
     {
@@ -75,34 +69,10 @@ public class MainViewModel : ViewModelBase
 
     private void ExecuteGenerate(object? parameter)
     {
-        if (string.IsNullOrWhiteSpace(InputText))
-        {
-            StatusMessage = "Error: Input text is empty.";
-            return;
-        }
+        var result = _generationService.Process(InputText, SelectedInputFormat, SelectedOutputLanguage);
 
-        try
-        {
-            var parser = SelectedInputFormat == "PlantUML" ? _plantUmlParser : _xmlUmlParser;
-
-            var diagram = parser.Parse(InputText);
-
-            if (_availableGenerators.TryGetValue(SelectedOutputLanguage, out var generator))
-            {
-                OutputText = generator.Generate(diagram);
-
-                if (OutputText.Contains("TODO:"))
-                    StatusMessage = $"Warning: Generation for {SelectedOutputLanguage} is not implemented.";
-                else
-                    StatusMessage = "Success: Code generated.";
-            }
-            else
-                StatusMessage = $"Error: Generator for {SelectedOutputLanguage} not found.";
-        }
-        catch (Exception ex)
-        {
-            OutputText = string.Empty;
-            StatusMessage = $"Error: {ex.Message}";
-        }
+        HasError = !result.IsSuccess;
+        StatusMessage = result.IsSuccess ? "Code generated successfully." : "Ready";
+        OutputText = result.Content;
     }
 }
