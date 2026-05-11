@@ -57,7 +57,11 @@ public class CSharpCodeGenerator : ICodeGenerator
 
         foreach (var method in umlInterface.Methods)
         {
-            sb.AppendLine($"{CSharpKeywords.Indent}{method.ReturnType} {method.Name}();");
+            var parameters = method.Parameters?.Any() == true
+                ? string.Join(", ", method.Parameters.Select(p => $"{p.Type} {p.Name}"))
+                : string.Empty;
+
+            sb.AppendLine($"{CSharpKeywords.Indent}{method.ReturnType} {method.Name}({parameters});");
         }
 
         sb.AppendLine(CSharpKeywords.CloseBrace);
