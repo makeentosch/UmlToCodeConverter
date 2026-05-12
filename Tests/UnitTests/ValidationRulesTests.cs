@@ -201,4 +201,60 @@ public class ValidationRulesTests
 
         errors.Should().BeEmpty();
     }
+
+    [Test]
+    public void UniqueNameRule_WhenDuplicateClassNames_ShouldReturnError()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Classes.Add(new UmlClass { Name = "SameClassName" });
+        model.Classes.Add(new UmlClass { Name = "SameClassName" });
+
+        var rule = new UniqueNameRule();
+
+        // Act
+        var errors = rule.Validate(model, "C#").ToList();
+
+        // Assert
+        errors.Should().ContainSingle();
+        errors.First().Should().Contain("Duplicate class name").And.Contain("SameClassName");
+    }
+
+    [Test]
+    public void UniqueNameRule_WhenDuplicateInterfaceNames_ShouldReturnError()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Interfaces.Add(new UmlInterface { Name = "SameInterfaceName" });
+        model.Interfaces.Add(new UmlInterface { Name = "SameInterfaceName" });
+
+        var rule = new UniqueNameRule();
+
+        // Act
+        var errors = rule.Validate(model, "Java").ToList();
+
+        // Assert
+        errors.Should().ContainSingle();
+        errors.First().Should().Contain("Duplicate interface name").And.Contain("SameInterfaceName");
+    }
+
+    [Test]
+    public void UniqueNameRule_WhenClassAndInterfaceHaveSameName_ShouldReturnError()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Classes.Add(new UmlClass { Name = "Logger" });
+        model.Interfaces.Add(new UmlInterface { Name = "Logger" });
+
+        var rule = new UniqueNameRule();
+
+        // Act
+        var errors = rule.Validate(model, "C#").ToList();
+
+        // Assert
+        errors.Should().ContainSingle();
+        errors.First().Should().Contain("Name conflict")
+            .And.Contain("Logger")
+            .And.Contain("both a class and an interface");
+    }
 }
