@@ -181,4 +181,82 @@ public class CSharpCodeGeneratorTests
         result.Should().Contain("public class Order");
         result.Should().Contain("public Customer Customer { get; set; }");
     }
+
+    [Test]
+    public void Generate_WhenInterfaceMethodHasSingleParameter_ShouldIncludeParameter()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Interfaces.Add(new UmlInterface
+        {
+            Name = "IService",
+            Methods = new List<UmlMethod>
+            {
+                new()
+                {
+                    Name = "Process",
+                    ReturnType = "void",
+                    Parameters = new List<UmlParameter>
+                    {
+                        new() { Name = "input", Type = "string" }
+                    }
+                }
+            }
+        });
+
+        // Act
+        var result = _generator.Generate(model);
+
+        // Assert
+        result.Should().Contain("void Process(string input);");
+    }
+
+    [Test]
+    public void Generate_WhenInterfaceMethodHasMultipleParameters_ShouldIncludeAllParameters()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Interfaces.Add(new UmlInterface
+        {
+            Name = "IAuth",
+            Methods = new List<UmlMethod>
+            {
+                new()
+                {
+                    Name = "Login",
+                    ReturnType = "bool",
+                    Parameters = new List<UmlParameter>
+                    {
+                        new() { Name = "username", Type = "string" },
+                        new() { Name = "password", Type = "string" },
+                        new() { Name = "rememberMe", Type = "bool" }
+                    }
+                }
+            }
+        });
+
+        // Act
+        var result = _generator.Generate(model);
+
+        // Assert
+        result.Should().Contain("bool Login(string username, string password, bool rememberMe);");
+    }
+
+    [Test]
+    public void Generate_WhenInterfaceIsEmpty_ShouldNotThrow()
+    {
+        // Arrange
+        var model = new CodeObjectModel();
+        model.Interfaces.Add(new UmlInterface { Name = "IMarker", Methods = new List<UmlMethod>() });
+
+        // Act
+        var action = () => _generator.Generate(model);
+
+        // Assert
+        action.Should().NotThrow();
+
+        var result = action();
+        result.Should().Contain("public interface IMarker");
+        result.Should().NotContain("()");
+    }
 }
