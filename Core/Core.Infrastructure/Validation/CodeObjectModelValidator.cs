@@ -11,6 +11,7 @@ public class CodeObjectModelValidator
     {
         _rules = new List<IValidationRule>
         {
+            new UniqueNameRule(),
             new MultipleInheritanceRule(),
             new SelfInheritanceRule(),
             new CyclicInheritanceRule(),
